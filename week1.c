@@ -19,6 +19,8 @@ void initializeLCD();
 // Procedure to send character data to the LCD
 void writeCharacter(uint32_t data);
 
+void scrollDisplay();
+
 int main(void)
 {
 	uint32_t dummyReadValue;
@@ -59,32 +61,58 @@ int main(void)
 	TIMER0->CTL |= (0x1UL<<0);
 
 	initializeLCD();
+
+	delayMs(1000);
+	writeCharacter('W');
+	//delayMs(1000);
+	writeCharacter('H');
+	//delayMs(1000);
+	writeCharacter('E');
+	//delayMs(1000);
+	writeCharacter('R');
+	//delayMs(1000);
+	writeCharacter('E');
+	//delayMs(1000);
+	writeCharacter(' ');
+	//delayMs(1000);
+	writeCharacter('R');
+	//delayMs(1000);
+	writeCharacter(' ');
+	//delayMs(1000);
+	writeCharacter('U');
+	//delayMs(1000);
+  writeCharacter('.');
+	//delayMs(1000);
+	writeCharacter('.');
+	//delayMs(1000);
+	writeCharacter('.');
+	//delayMs(1000);
+	writeCharacter('.');
+	//delayMs(1000);
+
+
+	//delayMs(1000);
+	//delayMs(1000);
+
 	
+
+	// Turn off cursor
+	command(0xC);
+  delayMs(1000);
+	
+	//
+	command(0xC0);
 	delayMs(1000);
 	writeCharacter('A');
-	//delayMs(1000);
-	writeCharacter('M');
-	//delayMs(1000);
-	writeCharacter('E');
-	//delayMs(1000);
-	writeCharacter('N');
-	//delayMs(1000);
-	writeCharacter('T');
-	//delayMs(1000);
-	writeCharacter('E');
-	//delayMs(1000);
+	writeCharacter('Y');
+	writeCharacter('Y');
+	writeCharacter('Y');
+	writeCharacter('Y');
 	writeCharacter(' ');
-	//delayMs(1000);
-	writeCharacter('#');
-	//delayMs(1000);
-	writeCharacter('1');
-	//delayMs(1000);
-	writeCharacter(' ');
-	//delayMs(1000);
-	writeCharacter('T');
-	//delayMs(1000);
-	writeCharacter('A');
-	//delayMs(1000);
+	writeCharacter('G');
+	writeCharacter('G');
+
+	scrollDisplay();
 	
 	while(1){
 	}
@@ -145,4 +173,25 @@ void writeCharacter(uint32_t data){
 	SETUPPORT->DATA |= (0x1UL<<2); // E = HIGH
 	delayMs(1);
 	SETUPPORT->DATA &= ~(0x1UL<<2); // E =LOW
+}
+
+void scrollDisplay()
+{
+	while(1)
+	{
+		int i;
+		for(i=0; i<16; i++)
+		{
+			command(0x1CUL);
+			delayMs(300);
+		}
+		
+
+		for(i=0; i<23; i++)
+		{
+			delayMs(10);
+			command(0x1CUL);
+		}
+
+	}
 }
