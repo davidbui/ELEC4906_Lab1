@@ -18,15 +18,15 @@
 #define MIN_FREQUENCY_LEVEL            0
 
 const char CHARACTER_MAP[][8] = {
-    // go_high state
-    { 0x1f, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 }, // top of go high
-    { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 }, // bot of go high
-    // stay_high state
-    { 0x1f, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },        // top of stay high
-    // go_low state
-    { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1f }, // bot of go low
-    // stay_low
-    { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1f }         // bot of stay low
+    // go_high state.
+    { 0x1f, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 }, // Top of go high.
+    { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 }, // Bot of go high.
+    // stay_high state.
+    { 0x1f, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },        // Top of stay high.
+    // go_low state.
+    { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1f }, // Bot of go low.
+    // stay_low.
+    { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1f }         // Bot of stay low.
 };
 
 const int FREQUENCY_LEVELS[7] = { 0, 500, 400, 300, 200, 100, 50 };
@@ -43,9 +43,9 @@ int current_state = 0;
 
 void InitializeGPIOPorts(void) {
     // Enable GPIOA, GPIOB, GPIOF.
-    SYSCTL->RCGCGPIO |= (0x1UL<<0); // A
-    SYSCTL->RCGCGPIO |= (0x1UL<<1); // B
-    SYSCTL->RCGCGPIO |= (0x1UL<<5); // F
+    SYSCTL->RCGCGPIO |= (0x1UL<<0); // Port A.
+    SYSCTL->RCGCGPIO |= (0x1UL<<1); // Port B.
+    SYSCTL->RCGCGPIO |= (0x1UL<<5); // Port F.
     
     // Do a dummy read to insert a few cycles after enabling the peripherals.
     dummy_read = SYSCTL->RCGCGPIO;
@@ -55,7 +55,7 @@ void InitializeGPIOPorts(void) {
     SETUPPORT->DIR &= ~(0x1UL<<7);          // Set the direction as an input.
     SETUPPORT->DEN |=  (0x1UL<<7);          // Digital enable.
 
-    // Setting up instruction pins; direction = output and digital enabled
+    // Setting up instruction pins; direction = output and digital enabled.
     SETUPPORT->DIR |=  (0x1UL<<4);          // PA4 -> RS.
     SETUPPORT->DEN |=  (0x1UL<<4);
     SETUPPORT->DIR |=  (0x1UL<<3);          // PA3 -> R/W.
@@ -67,54 +67,54 @@ void InitializeGPIOPorts(void) {
     DATAPORT->DIR |= (0xFFUL);
     DATAPORT->DEN |= (0xFFUL);
 
-    // Setting up GPIOF pins
+    // Setting up GPIOF pins.
     GPIOF->LOCK = 0x4C4F434B;               // Unlock GPIOF
     *((uint32_t *) &GPIOF->CR) = 0x1F;      // Enable write option to PUR for PF0.
 
     // Configure PF4 for button one.
-    GPIOF->DIR &= ~(0x1UL<<4);              // configure port as input
-    GPIOF->DEN |=  (0x1UL<<4);              // digital function
-    GPIOF->PUR |=  (0x1UL<<4);              // pull up resistor
-    GPIOF->IS  &= ~(0x1UL<<4);              // level sensitive interrupt
-    GPIOF->IBE &= ~(0x1UL<<4);              // single edge interrupt
-    GPIOF->IEV |=  (0x1UL<<4);              // rising edge interrupt
-    GPIOF->IM  |=  (0x1UL<<4);              // Unmask GPIOF Pin 4
+    GPIOF->DIR &= ~(0x1UL<<4);              // Configure port as input.
+    GPIOF->DEN |=  (0x1UL<<4);              // Digital function.
+    GPIOF->PUR |=  (0x1UL<<4);              // Pull up resistor.
+    GPIOF->IS  &= ~(0x1UL<<4);              // Level sensitive interrupt.
+    GPIOF->IBE &= ~(0x1UL<<4);              // Single edge interrupt.
+    GPIOF->IEV |=  (0x1UL<<4);              // Rising edge interrupt.
+    GPIOF->IM  |=  (0x1UL<<4);              // Unmask GPIOF Pin 4.
 
     // Configure PF0 for button two.
-    GPIOF->DIR &= ~(0x1UL<<0);              // configure port as input
-    GPIOF->DEN |=  (0x1UL<<0);              // digital function
-    GPIOF->PUR |=  (0x1UL<<0);              // pull up resistor
+    GPIOF->DIR &= ~(0x1UL<<0);              // Configure port as input.
+    GPIOF->DEN |=  (0x1UL<<0);              // Digital function.
+    GPIOF->PUR |=  (0x1UL<<0);              // Pull up resistor.
 
     GPIOF->AMSEL &= ~(0x1UL<<0);
     GPIOF->PCTL  &= ~(0x1UL<<0);
     GPIOF->AFSEL &= ~(0x1UL<<0);
-    GPIOF->IS    &= ~(0x1UL<<0);            // level sensitive interrupt
-    GPIOF->IBE   &= ~(0x1UL<<0);            // single edge interrupt
-    GPIOF->IEV   |=  (0x1UL<<0);            // rising edge interrupt
-    GPIOF->IM    |=  (0x1UL<<0);            // Unmask GPIOF Pin 0   
-        GPIOF->LOCK = 0x1;                              // lock GPIOF
+    GPIOF->IS    &= ~(0x1UL<<0);            // Level sensitive interrupt.
+    GPIOF->IBE   &= ~(0x1UL<<0);            // Single edge interrupt.
+    GPIOF->IEV   |=  (0x1UL<<0);            // Rising edge interrupt.
+    GPIOF->IM    |=  (0x1UL<<0);            // Unmask GPIOF Pin 0.
+        GPIOF->LOCK = 0x1;                  // Lock GPIOF.
 }
 
 void InitializeTimer0AForDelay(void) {   
-    SYSCTL->RCGCTIMER |= (0x1UL<<0);        // Enable GPTM TIMER0
-    TIMER0->CTL &= ~(0x1UL<<0);             // Disable TIMER0A for configuration
-    TIMER0->CFG = (0x4UL);                  // Configure TIMER0 to be independent 16 bit timer
+    SYSCTL->RCGCTIMER |= (0x1UL<<0);        // Enable GPTM TIMER0.
+    TIMER0->CTL &= ~(0x1UL<<0);             // Disable TIMER0A for configuration.
+    TIMER0->CFG = (0x4UL);                  // Configure TIMER0 to be independent 16 bit timer.
     TIMER0->TAMR = (0x2UL);                 // Set TIMERA to periodic mode. Default direction is to count down.
-    TIMER0->TAPR = (19UL);                  // Setup Prescale value of 20-1=19
-    TIMER0->TAILR = (79UL);                 // Setup interval of 80-1=79
-    TIMER0->CTL |= (0x1UL<<0);              // Enable TIMERA
+    TIMER0->TAPR = (19UL);                  // Setup Prescale value of 20-1=19.
+    TIMER0->TAILR = (79UL);                 // Setup interval of 80-1=79.
+    TIMER0->CTL |= (0x1UL<<0);              // Enable TIMERA.
 }
 
 void InitializeTimer0BForScroll(void) {  
     NVIC->ICER[0] = (0x1UL<<20);
-    SYSCTL->RCGCTIMER |= (0x1UL<<0);        // Enable GPTM TIMER0
-    TIMER0->CTL &= ~(0x1UL<<8);             // Disable TIMER0B for configuration
-    TIMER0->CFG = (0x4UL);                  // Configure TIMER0 to be independent 16 bit timer
+    SYSCTL->RCGCTIMER |= (0x1UL<<0);        // Enable GPTM TIMER0.
+    TIMER0->CTL &= ~(0x1UL<<8);             // Disable TIMER0B for configuration.
+    TIMER0->CFG = (0x4UL);                  // Configure TIMER0 to be independent 16 bit timer.
     TIMER0->TBMR = (0x2UL);                 // Set TIMER0B to periodic mode. Default direction is to count down.
-    TIMER0->TBPR = (399UL);                 // Setup Prescale value of 400-1=399
-    TIMER0->TBILR = (99999UL);              // Setup interval of 20000-1=19999
+    TIMER0->TBPR = (399UL);                 // Setup Prescale value of 400-1=399.
+    TIMER0->TBILR = (99999UL);              // Setup interval of 20000-1=19999.
 
-    TIMER0->IMR |= (0x1UL<<8);              // Arm TIMER0B interrupt
+    TIMER0->IMR |= (0x1UL<<8);              // Arm TIMER0B interrupt.
 }
 
 void InitializeLCD(void) {
@@ -163,20 +163,20 @@ void InitializeSpecialCharacters(void) {
 
 void SendCommand (uint32_t instruction) {
     DATAPORT->DATA   = instruction;
-    SETUPPORT->DATA &= ~(0x1UL<<4);     // RS = LOW
+    SETUPPORT->DATA &= ~(0x1UL<<4);     // RS  = LOW
     SETUPPORT->DATA &= ~(0x1UL<<3);     // R/W = LOW
-    SETUPPORT->DATA |= (0x1UL<<2);      // E = HIGH
+    SETUPPORT->DATA |= (0x1UL<<2);      // E   = HIGH
     DelayMs(1);
-    SETUPPORT->DATA &= ~(0x1UL<<2);     // E = LOW
+    SETUPPORT->DATA &= ~(0x1UL<<2);     // E   = LOW
 }
 
 void SendData(char data) {
     DATAPORT->DATA   =  (data);
-    SETUPPORT->DATA |=  (0x1UL<<4);     // RS = HIGH
+    SETUPPORT->DATA |=  (0x1UL<<4);     // RS  = HIGH
     SETUPPORT->DATA &= ~(0x1UL<<3);     // R/W = LOW
-    SETUPPORT->DATA |=  (0x1UL<<2);     // E = HIGH
+    SETUPPORT->DATA |=  (0x1UL<<2);     // E   = HIGH
     DelayMs(1);
-    SETUPPORT->DATA &= ~(0x1UL<<2);     // E =LOW
+    SETUPPORT->DATA &= ~(0x1UL<<2);     // E   = LOW
 }
 
 void writeString(char *string) {
@@ -218,7 +218,7 @@ void DecreaseFrequency(void) {
         if(current_frequency_level > MIN_FREQUENCY_LEVEL) {
             TIMER0->CTL &= ~(0x1UL<<8); // Disable TIMER0B for configuration.
             TIMER0->IMR &= ~(0x1UL<<8); // Disarm TIMER0B interrupt.
-            
+
             // Calculate the new reload counter value for TIMER0B interrupt.
             TIMER0->TBILR = ((FREQUENCY_LEVELS[current_frequency_level] * 0.001 * SYSTEM_CLOCK_FREQUENCY/(PRESCALE_VALUE+1)) - 1);
             TIMER0->IMR |= (0x1UL<<8);  // Arm TIMER0B interrupt.
@@ -272,7 +272,7 @@ void GPIOF_Handler(void) {
     NVIC->ICPR[0] = 0x1UL<<30; // Clear pending bit.
 }
 
-// Functions to print special characters for the 1 bit osciliscope
+// Functions to print special characters for the 1 bit osciliscope.
 
 void PrintGoHigh(void) {
     SendCommand(0x80 + (current_ddgram_pos%=40));
