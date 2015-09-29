@@ -14,7 +14,7 @@
 
 #define PRESCALE_VALUE              199UL
 #define SYSTEM_CLOCK_FREQUENCY      16000000UL
-#define MAX_SCROLL_LEVEL            9
+#define MAX_SCROLL_LEVEL            8
 #define MIN_SCROLL_LEVEL            0
 
 const char CHARACTER_MAP[][8] = {
@@ -29,10 +29,10 @@ const char CHARACTER_MAP[][8] = {
     { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1f }         // bot of stay low
 };
 
-const uint32_t SCROLL_LEVELS[] = { 10000, 7500, 5000, 2500, 1000, 500, 250, 10, 5, 2 };
+const uint32_t SCROLL_LEVELS[] = { 7500, 5000, 2500, 1000, 500, 250, 10, 5, 2 };
 
 // Global Variables
-uint8_t  current_scroll_level = 5;
+int current_scroll_level = 5;
 uint32_t dummy_read;
 
 int current_ddgram_pos = 0;
@@ -122,11 +122,11 @@ void InitializeLCD() {
     SETUPPORT->DATA &= (0x0UL);
     
     SETUPPORT->DATA &= ~(0x1UL<<2);     // Enable set to 0.
-    delayMs(15);                        // Delay greater than 15ms.
+    DelayMs(15);                        // Delay greater than 15ms.
     SendCommand(0x30UL);                // Wake up Command.
-    delayMs(5);                         // Delay greater than 4.1ms.
+    DelayMs(5);                         // Delay greater than 4.1ms.
     SendCommand(0x30UL);                // Wake up Command.
-    delayMs(1);                         // Delay greater than 100us.
+    DelayMs(1);                         // Delay greater than 100us.
     SendCommand(0x30UL);                // Wake up Command.
     SendCommand(0x38UL);                // Function Set -> 8x2.
     SendCommand(0x1UL);                 // Clear Display.
@@ -165,7 +165,7 @@ void SendCommand (uint32_t instruction) {
     SETUPPORT->DATA &= ~(0x1UL<<4);     // RS = LOW
     SETUPPORT->DATA &= ~(0x1UL<<3);     // R/W = LOW
     SETUPPORT->DATA |= (0x1UL<<2);      // E = HIGH
-    delayMs(1);
+    DelayMs(1);
     SETUPPORT->DATA &= ~(0x1UL<<2);     // E = LOW
 }
 
@@ -174,7 +174,7 @@ void SendInstruction(char data) {
     SETUPPORT->DATA |=  (0x1UL<<4);     // RS = HIGH
     SETUPPORT->DATA &= ~(0x1UL<<3);     // R/W = LOW
     SETUPPORT->DATA |=  (0x1UL<<2);     // E = HIGH
-    delayMs(1);
+    DelayMs(1);
     SETUPPORT->DATA &= ~(0x1UL<<2);     // E =LOW
 }
 
@@ -185,7 +185,7 @@ void writeString(char *string) {
     }
 }
 
-void delayMs(uint32_t delayTimeInMs) {
+void DelayMs(uint32_t delayTimeInMs) {
     uint32_t zeroPointOneMs = 0;
     TIMER0->ICR = (0x0UL);
     while (delayTimeInMs*10 > zeroPointOneMs) {
@@ -196,33 +196,33 @@ void delayMs(uint32_t delayTimeInMs) {
     }   
 }
 
-void increment_scroll() {
+void IncrementScroll() {
     TIMER0->CTL &= ~(0x1UL<<8); // Disable TIMER0B for configuration.
     TIMER0->IMR &= ~(0x1UL<<8); // Disarm TIMER0B interrupt.
     
     if (current_scroll_level < MAX_SCROLL_LEVEL) {
         current_scroll_level++;
-        if (current_scroll_level < MAX_SCROLL_LEVEL) {
+       // if (current_scroll_level < MAX_SCROLL_LEVEL) {
             // Calculate and configure counter reload value for Timer B (used for interrupts).
             TIMER0->TBILR = ((SCROLL_LEVELS[current_scroll_level] * SYSTEM_CLOCK_FREQUENCY/(PRESCALE_VALUE+1)) - 1);
-        }
+        //}
     }
 
     TIMER0->IMR |= (0x1UL<<8);  // Arm TIMER0B interrupt.
     TIMER0->CTL |= (0x1UL<<8);  // Enable TIMER0B for configuration.
 }
 
-void decrement_scroll(void) {
+void DecrementScroll(void) {
     TIMER0->CTL &= ~(0x1UL<<8); // Disable TIMER0B for configuration.
     TIMER0->IMR &= ~(0x1UL<<8); // Disarm TIMER0B interrupt.
 
     if (current_scroll_level > MIN_SCROLL_LEVEL) {
         current_scroll_level--;
 
-        if (current_scroll_level > MIN_SCROLL_LEVEL) {
+        //if (current_scroll_level > MIN_SCROLL_LEVEL) {
             // Calculate and configure counter reload value for Timer B (used for interrupts).
             TIMER0->TBILR = ((SCROLL_LEVELS[current_scroll_level] * SYSTEM_CLOCK_FREQUENCY/(PRESCALE_VALUE+1)) - 1);
-        }
+        //}
     }
 
     TIMER0->IMR |= (0x1UL<<8);  // Arm TIMER0B interrupt.
@@ -234,18 +234,18 @@ void TIMER0B_Handler(void) {
     
     if (current_state) {           // button one was pressed.
         if (previous_state) {      // previous state was a high.
-            print_stay_high();
+            PrintStayHigh();
             SendCommand(0x18);
         } else {                  // previous state was a low.
-            print_go_high();
+            PrintGoHigh();
             SendCommand(0x18);
         }
     } else {                      // button one is not pressed.
         if (previous_state) {      // previous state was a high.
-            print_go_low();
+            PrintGoLow();
             SendCommand(0x18);
         } else {                  // previous state was a low.
-            print_stay_low();
+            PrintStayLow();
             SendCommand(0x18);
         }
     }
@@ -264,10 +264,10 @@ void ScrollDisplay(void) {
 
 void GPIOF_Handler(void) {
     if (GPIOF->RIS & (0x1UL<<4)) {
-        increment_scroll();
+        IncrementScroll();
         GPIOF->ICR |= (0x1UL<<4); // Clear interrupt at 4.  
     } else if (GPIOF->RIS & (0x1UL<<0)) {
-        decrement_scroll();
+        DecrementScroll();
         GPIOF->ICR |= (0x1UL<<0); // Clear interrupt at 0.
     }
 
@@ -276,7 +276,7 @@ void GPIOF_Handler(void) {
 
 // Functions to print special characters for the 1 bit osciliscope
 
-void print_go_high(void) {
+void PrintGoHigh(void) {
     SendCommand(0x80 + (current_ddgram_pos%=40));
     SendInstruction(GO_HIGH);
     SendCommand(0xC0 + (current_ddgram_pos%=40));
@@ -284,7 +284,7 @@ void print_go_high(void) {
     current_ddgram_pos++;
 }
 
-void print_stay_high(void) {
+void PrintStayHigh(void) {
     SendCommand(0x80 + (current_ddgram_pos%=40));
     SendInstruction(STAY_HIGH);
     SendCommand(0xC0 + (current_ddgram_pos%=40));
@@ -292,7 +292,7 @@ void print_stay_high(void) {
     current_ddgram_pos++;
 }
 
-void print_go_low(void) {
+void PrintGoLow(void) {
     SendCommand(0x80 + (current_ddgram_pos%=40));
     SendInstruction(TRANSITION);
     SendCommand(0xC0 + (current_ddgram_pos%=40));
@@ -300,7 +300,7 @@ void print_go_low(void) {
     current_ddgram_pos++;
 }
 
-void print_stay_low(void) {
+void PrintStayLow(void) {
     SendCommand(0x80 + (current_ddgram_pos%=40));
     SendInstruction(' '); // Need to put a blank to erase previous data in this address.
     SendCommand(0xC0 + (current_ddgram_pos%=40));

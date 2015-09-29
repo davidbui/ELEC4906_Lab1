@@ -14,17 +14,17 @@ void InitializeSpecialCharacters(void);     // Write to CGRAM to setup special c
 // Utility Functions
 void SendCommand(uint32_t instruction);     // Send instructions to the LCD
 void SendInstruction(char data);            // Send character data to the LCD
-void writeString(char *string);             // Write a string of characters
-void delayMs(uint32_t delayTimeInMs);       // Delay function using TIMER0A (0.1ms)
-void increment_scroll(void);
-void decrement_scroll(void);
+void WriteString(char *string);             // Write a string of characters
+void DelayMs(uint32_t delayTimeInMs);       // Delay function using TIMER0A (0.1ms)
+void IncrementScroll(void);
+void DecrementScroll(void);
 void TIMER0B_Handler (void);                // ISR for Timer0B interrupt
 void ScrollDisplay(void);
 
 // Functions to print special characters for the 1 bit osciliscope
-void print_go_high(void);
-void print_stay_high(void);
-void print_go_low(void);
-void print_stay_low(void);
+void PrintGoHigh(void);
+void PrintStayHigh(void);
+void PrintGoLow(void);
+void PrintStayLow(void);
 
 #endif
