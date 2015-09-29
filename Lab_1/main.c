@@ -17,7 +17,7 @@ int main(void) {
     InitializeGPIOPorts();
     InitializeTimer0AForDelay();
     InitializeLCD();
-    SendCommand(0xCUL);                     // Turn off cursor
+    SendCommand(0xCUL);                 // Turn off cursor
     InitializeSpecialCharacters();
 
     // Shift the screen to the right by 16 times so that the end of the screen will have the address 0x80
