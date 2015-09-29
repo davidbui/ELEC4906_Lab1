@@ -12,10 +12,10 @@
 #define GO_LOW      0x3
 #define STAY_LOW    0x4
 
-#define PRESCALE_VALUE              199UL
+#define PRESCALE_VALUE              159UL
 #define SYSTEM_CLOCK_FREQUENCY      16000000UL
-#define MAX_SCROLL_LEVEL            8
-#define MIN_SCROLL_LEVEL            0
+#define MAX_FREQUENCY_LEVEL            6
+#define MIN_FREQUENCY_LEVEL            0
 
 const char CHARACTER_MAP[][8] = {
     // go_high state
@@ -29,9 +29,7 @@ const char CHARACTER_MAP[][8] = {
     { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1f }         // bot of stay low
 };
 
-
-//const uint32_t SCROLL_LEVELS[] = { 7500, 5000, 2500, 1000, 500, 250, 10, 5, 2 };
-const int FREQUENCY_LEVELS[8] = { 2, 5, 15, 50, 150, 450, 1350, 4050 };
+const int FREQUENCY_LEVELS[7] = { 0, 500, 400, 300, 200, 100, 50 };
 
 // Global Variables
 int current_frequency_level = 3;
@@ -94,6 +92,7 @@ void InitializeGPIOPorts(void) {
     GPIOF->IBE   &= ~(0x1UL<<0);            // single edge interrupt
     GPIOF->IEV   |=  (0x1UL<<0);            // rising edge interrupt
     GPIOF->IM    |=  (0x1UL<<0);            // Unmask GPIOF Pin 0   
+        GPIOF->LOCK = 0x1;                              // lock GPIOF
 }
 
 void InitializeTimer0AForDelay(void) {   
@@ -198,32 +197,34 @@ void DelayMs(uint32_t delayTimeInMs) {
     }   
 }
 
-void IncreaseFrequency() {    
-    if (current_frequency_level < (MAX_SCROLL_LEVEL-1)) {
-        TIMER0->CTL &= ~(0x1UL<<8); // Disable TIMER0B for configuration.
-        TIMER0->IMR &= ~(0x1UL<<8); // Disarm TIMER0B interrupt.
-
+void IncreaseFrequency() {   
+    if (current_frequency_level < (MAX_FREQUENCY_LEVEL)) {
         current_frequency_level++;
+        if(current_frequency_level < (MAX_FREQUENCY_LEVEL)) {
+            TIMER0->CTL &= ~(0x1UL<<8); // Disable TIMER0B for configuration.
+            TIMER0->IMR &= ~(0x1UL<<8); // Disarm TIMER0B interrupt.
 
-        // Calculate the new reload counter for TIMER0B interrupt.
-        TIMER0->TBILR = ((FREQUENCY_LEVELS[current_frequency_level] * SYSTEM_CLOCK_FREQUENCY/(PRESCALE_VALUE+1)) - 1);
-        TIMER0->IMR |= (0x1UL<<8);  // Arm TIMER0B interrupt.
-        TIMER0->CTL |= (0x1UL<<8);  // Enable TIMER0B for configuration.
-        }
+            // Calculate the new reload counter for TIMER0B interrupt.
+            TIMER0->TBILR = ((FREQUENCY_LEVELS[current_frequency_level] * 0.001 * SYSTEM_CLOCK_FREQUENCY/(PRESCALE_VALUE+1)) - 1);
+            TIMER0->IMR |= (0x1UL<<8);  // Arm TIMER0B interrupt.
+            TIMER0->CTL |= (0x1UL<<8);  // Enable TIMER0B for configuration.
+      }
+    }
 }
 
 void DecreaseFrequency(void) {
-    if (current_frequency_level > MIN_SCROLL_LEVEL) {
-        TIMER0->CTL &= ~(0x1UL<<8); // Disable TIMER0B for configuration.
-        TIMER0->IMR &= ~(0x1UL<<8); // Disarm TIMER0B interrupt.
-
+    if (current_frequency_level > MIN_FREQUENCY_LEVEL) {
         current_frequency_level--;
-
-        // Calculate the new reload counter value for TIMER0B interrupt.
-        TIMER0->TBILR = ((FREQUENCY_LEVELS[current_frequency_level] * SYSTEM_CLOCK_FREQUENCY/(PRESCALE_VALUE+1)) - 1);
-        TIMER0->IMR |= (0x1UL<<8);  // Arm TIMER0B interrupt.
-        TIMER0->CTL |= (0x1UL<<8);  // Enable TIMER0B for configuration.
-        }
+        if(current_frequency_level > MIN_FREQUENCY_LEVEL) {
+            TIMER0->CTL &= ~(0x1UL<<8); // Disable TIMER0B for configuration.
+            TIMER0->IMR &= ~(0x1UL<<8); // Disarm TIMER0B interrupt.
+            
+            // Calculate the new reload counter value for TIMER0B interrupt.
+            TIMER0->TBILR = ((FREQUENCY_LEVELS[current_frequency_level] * 0.001 * SYSTEM_CLOCK_FREQUENCY/(PRESCALE_VALUE+1)) - 1);
+            TIMER0->IMR |= (0x1UL<<8);  // Arm TIMER0B interrupt.
+            TIMER0->CTL |= (0x1UL<<8);  // Enable TIMER0B for configuration.
+         }
+    }
 }
 
 void TIMER0B_Handler(void) { 
@@ -260,10 +261,10 @@ void ScrollDisplay(void) {
 }
 
 void GPIOF_Handler(void) {
-    if (GPIOF->RIS & (0x1UL<<4)) {
+    if (GPIOF->RIS & (0x1UL<<4) && !(GPIOF->RIS & (0x1UL<<0))) {
         IncreaseFrequency();
         GPIOF->ICR |= (0x1UL<<4); // Clear interrupt at 4.  
-    } else if (GPIOF->RIS & (0x1UL<<0)) {
+    } else if (GPIOF->RIS & (0x1UL<<0) && !((GPIOF->RIS & (0x1UL<<4)))) {
         DecreaseFrequency();
         GPIOF->ICR |= (0x1UL<<0); // Clear interrupt at 0.
     }
