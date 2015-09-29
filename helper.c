@@ -14,7 +14,7 @@
 
 #define PRESCALE_VALUE              199UL
 #define SYSTEM_CLOCK_FREQUENCY      16000000UL
-#define MAX_SCROLL_LEVEL            7
+#define MAX_SCROLL_LEVEL            8
 #define MIN_SCROLL_LEVEL            0
 
 const char CHARACTER_MAP[][8] = {
@@ -31,10 +31,10 @@ const char CHARACTER_MAP[][8] = {
 
 
 //const uint32_t SCROLL_LEVELS[] = { 7500, 5000, 2500, 1000, 500, 250, 10, 5, 2 };
-const uint32_t SCROLL_LEVELS[] = { 2, 10, 50, 250, 750, 2500, 10000 };
+const int SCROLL_LEVELS[8] = { 2, 5, 15, 50, 150, 450, 1350, 4050 };
 
 // Global Variables
-int current_scroll_level = 5;
+int current_scroll_level = 3;
 uint32_t dummy_read;
 
 int current_ddgram_pos = 0;
@@ -139,14 +139,14 @@ void InitializeLCD(void) {
 
 void InitializeNVIC(void) {
     // set priority = 4
-    NVIC->IP[20] = 4<<5;            // recall IRQ # = 20
-    NVIC->ICPR[0] = (0x1UL<<20);    // clear pending bit … just to be safe
-    NVIC->ISER[0] = (0x1UL<<20);    // enable interrupt at NVIC
+    NVIC->IP[20] = 4<<5;            // Recall IRQ # = 20.
+    NVIC->ICPR[0] = (0x1UL<<20);    // Clear pending bit.
+    NVIC->ISER[0] = (0x1UL<<20);    // Enable interrupt at NVIC.
     
     // Initialize GPIOF interrupt handler
-    NVIC->IP[30] = 4<<5;            // Set priority = 4
-    NVIC->ICPR[0] = (0x1UL<<30);    // Clear pending bit
-    NVIC->ISER[0] = (0x1UL<<30);    // Enable interrupt at NVIC table
+    NVIC->IP[30] = 4<<5;            // Set priority = 4.
+    NVIC->ICPR[0] = (0x1UL<<30);    // Clear pending bit.
+    NVIC->ISER[0] = (0x1UL<<30);    // Enable interrupt at NVIC table.
 }
 
 void InitializeSpecialCharacters(void) {
@@ -199,10 +199,10 @@ void DelayMs(uint32_t delayTimeInMs) {
 }
 
 void IncreaseFrequency() {    
-    if (current_scroll_level < MAX_SCROLL_LEVEL-1) {
+    if (current_scroll_level < (MAX_SCROLL_LEVEL-1)) {
         TIMER0->CTL &= ~(0x1UL<<8); // Disable TIMER0B for configuration.
         TIMER0->IMR &= ~(0x1UL<<8); // Disarm TIMER0B interrupt.
-            
+
         current_scroll_level++;
 
         // Calculate the new reload counter for TIMER0B interrupt.
@@ -218,7 +218,7 @@ void DecreaseFrequency(void) {
         TIMER0->IMR &= ~(0x1UL<<8); // Disarm TIMER0B interrupt.
 
         current_scroll_level--;
-            
+
         // Calculate the new reload counter value for TIMER0B interrupt.
         TIMER0->TBILR = ((SCROLL_LEVELS[current_scroll_level] * SYSTEM_CLOCK_FREQUENCY/(PRESCALE_VALUE+1)) - 1);
         TIMER0->IMR |= (0x1UL<<8);  // Arm TIMER0B interrupt.
@@ -248,7 +248,7 @@ void TIMER0B_Handler(void) {
     }
     previous_state = current_state;
     
-    // Clear interrupt at GPTM ... de-assert IRQ 19 signal.
+    // Clear interrupt at GPTM
     TIMER0->ICR = (0x1UL<<8);
     
     // Clear pending bit in NVIC
@@ -269,7 +269,6 @@ void GPIOF_Handler(void) {
     }
 
     NVIC->ICPR[0] = 0x1UL<<30; // Clear pending bit.
-    NVIC->ICPR[0] = 0x1UL<<20;
 }
 
 // Functions to print special characters for the 1 bit osciliscope
