@@ -31,10 +31,10 @@ const char CHARACTER_MAP[][8] = {
 
 
 //const uint32_t SCROLL_LEVELS[] = { 7500, 5000, 2500, 1000, 500, 250, 10, 5, 2 };
-const int SCROLL_LEVELS[8] = { 2, 5, 15, 50, 150, 450, 1350, 4050 };
+const int FREQUENCY_LEVELS[8] = { 2, 5, 15, 50, 150, 450, 1350, 4050 };
 
 // Global Variables
-int current_scroll_level = 3;
+int current_frequency_level = 3;
 uint32_t dummy_read;
 
 int current_ddgram_pos = 0;
@@ -199,28 +199,28 @@ void DelayMs(uint32_t delayTimeInMs) {
 }
 
 void IncreaseFrequency() {    
-    if (current_scroll_level < (MAX_SCROLL_LEVEL-1)) {
+    if (current_frequency_level < (MAX_SCROLL_LEVEL-1)) {
         TIMER0->CTL &= ~(0x1UL<<8); // Disable TIMER0B for configuration.
         TIMER0->IMR &= ~(0x1UL<<8); // Disarm TIMER0B interrupt.
 
-        current_scroll_level++;
+        current_frequency_level++;
 
         // Calculate the new reload counter for TIMER0B interrupt.
-        TIMER0->TBILR = ((SCROLL_LEVELS[current_scroll_level] * SYSTEM_CLOCK_FREQUENCY/(PRESCALE_VALUE+1)) - 1);
+        TIMER0->TBILR = ((FREQUENCY_LEVELS[current_frequency_level] * SYSTEM_CLOCK_FREQUENCY/(PRESCALE_VALUE+1)) - 1);
         TIMER0->IMR |= (0x1UL<<8);  // Arm TIMER0B interrupt.
         TIMER0->CTL |= (0x1UL<<8);  // Enable TIMER0B for configuration.
         }
 }
 
 void DecreaseFrequency(void) {
-    if (current_scroll_level > MIN_SCROLL_LEVEL) {
+    if (current_frequency_level > MIN_SCROLL_LEVEL) {
         TIMER0->CTL &= ~(0x1UL<<8); // Disable TIMER0B for configuration.
         TIMER0->IMR &= ~(0x1UL<<8); // Disarm TIMER0B interrupt.
 
-        current_scroll_level--;
+        current_frequency_level--;
 
         // Calculate the new reload counter value for TIMER0B interrupt.
-        TIMER0->TBILR = ((SCROLL_LEVELS[current_scroll_level] * SYSTEM_CLOCK_FREQUENCY/(PRESCALE_VALUE+1)) - 1);
+        TIMER0->TBILR = ((FREQUENCY_LEVELS[current_frequency_level] * SYSTEM_CLOCK_FREQUENCY/(PRESCALE_VALUE+1)) - 1);
         TIMER0->IMR |= (0x1UL<<8);  // Arm TIMER0B interrupt.
         TIMER0->CTL |= (0x1UL<<8);  // Enable TIMER0B for configuration.
         }
