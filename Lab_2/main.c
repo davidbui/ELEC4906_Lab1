@@ -54,15 +54,14 @@ void play_twinkle_twinkle_little_star()
 
 int main(void)
 {
-	unsigned int lastADC = 0;
 	GPIO_init();
 	
 	while(1)
 	{
-		
-  play_twinkle_twinkle_little_star();
+		//play_twinkle_twinkle_little_star();
 	}
-	return 0;
+	
+
 }
 void GPIO_init(void)
 {
@@ -201,11 +200,27 @@ void ADC0SS3_Handler(void)
 	adc0Result = ADC0->SSFIFO3;
 	adc0Result/=512;
 
-	if (adc0Result > 3) {
-		GPIOF->DATA |= (1UL<<3);
-	}
-	else {		
-		GPIOF->DATA &= ~(1UL<<3);
+//	if (adc0Result > 3) {
+//		GPIOF->DATA |= (1UL<<3);
+//	}
+//	else {		
+//		GPIOF->DATA &= ~(1UL<<3);
+//	}
+	
+	if (adc0Result > 6)
+		WTIMER0->TAILR = C;
+	else if(adc0Result > 5)
+		WTIMER0->TAILR = D;
+	else if(adc0Result > 4)
+		WTIMER0->TAILR = E;
+	else if(adc0Result > 3)
+		WTIMER0->TAILR = F;
+	else if(adc0Result > 2)
+		WTIMER0->TAILR = A;
+	else if(adc0Result > 1)
+		WTIMER0->TAILR = B;
+	else {
+		WTIMER0->TAILR = C2;
 	}
  
  ADC0->ISC |= (1UL << 3);  // Clear interrupt
